@@ -43,7 +43,7 @@ PressCare: 병상 웹캠 영상으로 환자 자세를 5가지(앙와위·좌측
    - 테스트·데모에는 실제 환자 영상 대신 팀원이 직접 찍은 영상이나 공개 데이터셋만 쓴다.
 4. **진단하지 않는다.** 화면 문구·코드 주석·문서에서 "욕창 진단/예측 확률"처럼 의료 판단으로 읽히는 표현을 쓰지 않는다. 이 서비스는 **체위변경 기록·알림 보조 도구**다. (D-003)
 5. **AI 모델 라이선스.** 새 모델·가중치를 넣기 전에 상업적 이용 가능 여부를 확인하고 `docs/DECISIONS.md`에 적는다. **Ultralytics YOLOv8/YOLO11은 AGPL-3.0이므로 확인 전에는 넣지 않는다.** 포즈 추정기는 교체 가능한 인터페이스 뒤에 둔다. (D-004)
-6. **기준 시간·임계값은 하드코딩하지 않는다.** 체위변경 주기(`REPOSITION_INTERVAL_MIN`, 기본 120), 사전 경고(`REPOSITION_WARNING_MIN`, 기본 100), 자세 확정 시간(`POSTURE_STABLE_SEC`) 등은 설정에서 읽는다.
+6. **기준 시간·임계값은 하드코딩하지 않는다.** 체위변경 주기(`REPOSITION_INTERVAL_MIN`, 기본 120), 사전 경고(`REPOSITION_WARNING_MIN`, 기본 100), 자세 확정 시간(`POSTURE_STABLE_SEC`), offline 판정(`EDGE_OFFLINE_SEC`) 등은 설정에서 읽는다. `DEMO_TIME_SCALE`은 시연 전용이며 production에서는 항상 1로 동작해야 한다.
 7. **API를 바꾸면 `docs/API.md`도 같이 고친다.** DB 스키마를 바꾸면 Alembic 마이그레이션을 만들고 `docs/ARCHITECTURE.md`를 갱신한다.
 8. **main 브랜치에 직접 커밋·푸시하지 않는다.** `feature/...` 등 브랜치에서 작업한다. (`docs/GIT_GUIDE.md`)
 9. **주석과 문서는 한국어**, 코드 식별자(변수·함수·파일명)는 영어.

@@ -91,7 +91,18 @@
 // 응답 200
 { "ok": true }
 ```
-- 3분 이상 heartbeat가 없으면 병상 상태 `offline`.
+- `EDGE_OFFLINE_SEC`(기본 180초) 동안 heartbeat가 없으면 병상 상태 `offline`.
+
+### `POST /edge-devices`  (인증: JWT, `admin`만)
+병상 PC용 기기 토큰 발급. 토큰은 **이 응답에서 한 번만** 보여주고 서버엔 해시만 저장한다.
+```json
+// 요청
+{ "bed_id": 3 }
+// 응답 201
+{ "device_id": 7, "bed_id": 3, "token": "pc_dev_..." }
+```
+
+### `DELETE /edge-devices/{device_id}`  (`admin`만) → 토큰 폐기
 
 ---
 

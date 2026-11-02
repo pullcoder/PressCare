@@ -27,6 +27,8 @@ cp .env.example .env            # Windows: copy .env.example .env
 
 ## 3. DB · Redis (Docker)
 
+> ⚠️ `docker-compose.yml`, `backend/`, `edge/`, `frontend/`는 TASKS T0-3~T0-5에서 만들어진다. 그 전에는 3~6단계 명령이 동작하지 않는다.
+
 ```bash
 docker compose up -d db redis
 docker compose ps               # db, redis 가 running 이면 OK
@@ -54,13 +56,19 @@ python -m edge.main --camera 0 --bed-id BED-01 --preview   # --preview: 관절 �
 ```
 
 - 포즈 모델 파일(`pose_landmarker.task`)은 저장소에 없다. MediaPipe 공식 페이지에서 받아 `edge/models/weights/`에 둔다.
-- `EDGE_DEVICE_TOKEN`은 백엔드 관리자 화면(또는 `POST /edge-devices`)에서 발급받아 `.env`에 넣는다.
-- `--preview` 창은 개발용이다. **녹화 기능을 만들지 않는다** (D-002).
+- `EDGE_DEVICE_TOKEN`은 `POST /edge-devices`(API.md 3장)로 발급받아 `.env`에 넣는다.
+- `--preview` 창은 개발용이다. **edge 코드에 녹화·프레임 저장 기능을 만들지 않는다** (D-002).
+
+### 환경변수 위치
+- `.env`는 **저장소 루트에 하나만** 둔다.
+- backend·edge 설정 코드는 루트 `.env`를 읽도록 경로를 지정한다 (예: pydantic-settings `env_file="../.env"`).
+- frontend는 `vite.config.ts`에 `envDir: '..'`를 넣어야 루트 `.env`의 `VITE_` 변수를 읽는다.
 
 ### 카메라 설치 가이드
 - 침대 머리맡 위쪽 또는 천장에서 **침대 전체가 보이도록 내려다보는** 각도.
 - 역광(창문 정면)을 피하고, 야간 테스트는 IR 카메라로 별도 진행.
 - 개발·시연 영상은 **팀원이 직접 누워서 촬영**한다. 실제 환자 촬영 금지.
+- 테스트 영상은 저장소 밖(예: 팀 드라이브)에 보관한다. `.gitignore`가 `*.mp4` 등을 막지만 다른 확장자도 커밋하지 않는다.
 
 ## 6. 프론트엔드
 

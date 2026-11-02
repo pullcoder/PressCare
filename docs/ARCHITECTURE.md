@@ -92,23 +92,25 @@ PressCare/
 │   └── package.json
 ├── docs/
 ├── docker-compose.yml           # db, redis
-└── .env.example
+└── .env.example                 # 환경변수는 루트 .env 하나만 사용
 ```
 
 ## 4. DB 개요 (초안)
 
 | 테이블 | 주요 컬럼 | 설명 |
 |--------|----------|------|
-| `users` | id, email, password_hash, name, role(`admin`/`nurse`/`guardian`) | 사용자 |
+| `users` | id, email, password_hash, name, role(`admin`/`nurse`/`guardian`), ward_id(nullable) | 사용자 (간호사는 소속 병동만 조회) |
 | `wards` | id, name | 병동 |
 | `beds` | id, ward_id, code(`BED-01`), patient_id(nullable) | 병상 |
 | `patients` | id, display_name(가명/이니셜), reposition_interval_min(nullable, 환자별 기준) | 환자 (실명 최소화) |
 | `edge_devices` | id, bed_id, token_hash, last_seen_at | 병상 PC |
 | `posture_events` | id, bed_id, posture, confidence, keypoints(JSONB), started_at, source(`edge`/`manual`) | 확정된 자세 변경 |
 | `alerts` | id, bed_id, level(`warning`/`critical`), triggered_at, acknowledged_by, acknowledged_at | 알림 |
+| `push_subscriptions` | id, user_id, endpoint, p256dh, auth, created_at | 웹 푸시 구독 |
 | `pressure_snapshots` | id, bed_id, date, region_seconds(JSONB) | 부위별 누적 압박 시간 (히트맵용) |
 
 - 시각은 모두 **UTC로 저장**, 화면에서 `Asia/Seoul`로 표시.
+- 보호자(`guardian`)의 환자 연결 방식은 v1에서 정한다 (MVP는 `admin`/`nurse`만).
 - 스키마가 바뀌면 Alembic 마이그레이션 + 이 표 갱신.
 
 ## 5. 자세 분류 로직 (MVP 규칙 기반)

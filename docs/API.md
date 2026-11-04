@@ -13,7 +13,10 @@
 | 계산이 필요한 조회 (압박 히트맵, 기록 내보내기) | FastAPI `/api/v1` | 사용자 토큰 |
 
 - 화면은 Supabase 테이블에 **직접 쓰지 않는다.** 쓰기는 모두 FastAPI를 거친다 (RLS로 insert/update 막음).
-- FastAPI는 Supabase JWT를 `SUPABASE_JWT_SECRET`으로 검증하고 `profiles`에서 역할을 읽는다.
+- FastAPI는 Supabase 사용자 토큰(ES256)을 **공개키(JWKS)로 검증**하고 `profiles`에서 역할을 읽는다 (D-014).
+  - JWKS 주소: `{SUPABASE_URL}/auth/v1/.well-known/jwks.json`. 토큰 헤더의 `kid`로 키를 고르고, 키 목록은 메모리에 캐시한다(모르는 `kid`가 오면 한 번 다시 받기).
+  - 확인할 것: 서명, `exp`, `aud = "authenticated"`, `iss = {SUPABASE_URL}/auth/v1`. `sub`가 사용자 id다.
+  - `SUPABASE_JWT_SECRET`(Legacy HS256)은 쓰지 않는다.
 - 형식: JSON, 시각은 ISO 8601 UTC (`2026-11-02T06:30:00Z`).
 - 실제 동작 명세는 서버 실행 후 `http://localhost:8000/docs`(Swagger)가 기준. **API를 바꾸면 이 문서도 같이 고친다.**
 

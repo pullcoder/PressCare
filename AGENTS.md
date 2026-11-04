@@ -20,6 +20,7 @@ PressCare: 병상 웹캠 영상으로 환자 자세를 5가지(앙와위·좌측
 | 커밋·브랜치·PR | `docs/GIT_GUIDE.md` |
 | 설치·실행 | `docs/SETUP.md` |
 | "왜 이렇게 했지?" | `docs/DECISIONS.md` |
+| 개인정보·비밀번호·토큰·키를 다룬다 | `docs/SECURITY.md` (**기능보다 우선**) |
 
 문서와 코드가 다르면 **코드를 문서에 맞추지 말고 먼저 사용자에게 알린다.**
 
@@ -38,6 +39,10 @@ PressCare: 병상 웹캠 영상으로 환자 자세를 5가지(앙와위·좌측
 2. **비밀 정보 금지.** API 키, 비밀번호, 토큰을 코드·문서·커밋에 넣지 않는다. `.env`만 사용하고, 새 변수는 `.env.example`에 빈 값으로 추가한다.
    - `SUPABASE_SERVICE_ROLE_KEY`는 RLS를 무시하는 키다. **backend에서만** 쓰고, frontend 코드나 `VITE_` 변수에 절대 넣지 않는다.
    - frontend는 Supabase 테이블을 **읽기만** 한다. 쓰기는 backend API를 거친다.
+   - 사용자 토큰은 JWKS 공개키로 검증한다. `SUPABASE_JWT_SECRET`(Legacy HS256)을 다시 도입하지 않는다 (D-014).
+   - `FIELD_ENCRYPTION_KEY`, `BLIND_INDEX_KEY`는 backend 전용이다. 휴대폰·주소·이메일은 `backend/app/core/crypto.py`로만 암호화·복호화하고, 복호화한 값을 로그에 남기지 않는다 (D-015).
+   - 우리가 직접 저장하는 비밀번호·PIN은 Argon2id, 서버가 만든 토큰은 SHA-256 해시로만 저장한다. 원문 저장 금지 (D-016).
+   - 새 개인정보 컬럼을 만들기 전에 `docs/SECURITY.md` 2장 표에 추가하고 사용자에게 확인받는다.
 3. **환자 영상은 밖으로 내보내지 않는다.** (D-002)
    - 원본 영상·프레임은 edge 메모리에서만 처리하고 디스크에 저장하지 않는다 (`SAVE_RAW_FRAMES=false`가 기본값).
    - 서버로 보내는 것은 **자세 라벨, 신뢰도, 관절 좌표(keypoints), 시각**뿐이다.

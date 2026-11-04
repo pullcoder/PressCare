@@ -60,6 +60,7 @@
 | T2-4 | `bed_status` 갱신 로직 (`posture_since`, offline 판정) | | ⬜ |
 | T2-5 | 수동 기록/보정 API | | ⬜ |
 | T2-6 | 가짜 병상 시뮬레이터 `tools/fake_beds.py` | | ⬜ |
+| T2-7 | `core/crypto.py`: AES-256-GCM 필드 암호화, HMAC 인덱스, Argon2id·SHA-256 해시 + 테스트 (SECURITY.md) | | ⬜ |
 
 ## T3. 대시보드 · 알림
 

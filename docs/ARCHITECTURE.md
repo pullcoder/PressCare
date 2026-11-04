@@ -111,7 +111,7 @@ PressCare/
 ├── backend/
 │   ├── app/
 │   │   ├── main.py
-│   │   ├── core/                # 설정, Supabase 클라이언트, JWT 검증
+│   │   ├── core/                # 설정, Supabase 클라이언트, JWT 검증, crypto.py(암호화·해시)
 │   │   ├── api/v1/
 │   │   │   ├── edge.py          # 엣지 이벤트·heartbeat 수신
 │   │   │   ├── devices.py       # 기기 토큰 발급·폐기
@@ -153,12 +153,12 @@ PressCare/
 
 | 테이블 | 주요 컬럼 | 설명 |
 |--------|----------|------|
-| `profiles` | id(= `auth.users.id`), name, role(`admin`/`head_nurse`/`nurse`/`guardian`/`doctor`), ward_id(nullable), phone(nullable) | 사용자 정보. 로그인은 Supabase Auth |
+| `profiles` | id(= `auth.users.id`), name, role(`admin`/`head_nurse`/`nurse`/`guardian`/`doctor`), ward_id(nullable), phone_enc, phone_bidx, contact_email_enc, contact_email_bidx, address_enc (모두 nullable) | 사용자 정보. 로그인·비밀번호는 Supabase Auth. 연락처·주소는 암호화 저장 (D-015, SECURITY.md) |
 | `wards` | id, name | 병동 |
 | `beds` | id, ward_id, code(`BED-01`), patient_id(nullable) | 병상 |
 | `patients` | id, display_name(가명/이니셜), reposition_interval_min(nullable) | 환자 (실명 최소화) |
 | `guardian_links` | guardian_id, patient_id | 보호자 ↔ 환자 연결 (v1) |
-| `edge_devices` | id, bed_id, token_hash, last_seen_at | 병상 PC |
+| `edge_devices` | id, bed_id, token_hash(SHA-256), last_seen_at, revoked_at | 병상 PC. 토큰 원문은 저장 안 함 (D-016) |
 | `bed_status` | bed_id(PK), current_posture, confidence, posture_since, status(`ok`/`warning`/`critical`/`unknown`/`offline`), updated_at | **현재 상태 1행/병상**. Realtime 구독 대상 |
 | `posture_events` | id, bed_id, posture, confidence, keypoints(jsonb), started_at, source(`edge`/`manual`), created_by(nullable) | 확정된 자세 변경 이력 |
 | `alerts` | id, bed_id, level(`warning`/`critical`), triggered_at, acknowledged_by, acknowledged_at, escalated_at | 알림. Realtime 구독 대상 |
@@ -167,6 +167,8 @@ PressCare/
 
 - 쓰기: edge 이벤트·알림·`bed_status`는 **backend만** 쓴다(service key). 화면은 읽기 + 알림 확인·수동 기록만(backend API 경유).
 - RLS: 모든 테이블에 켠다. `nurse`는 `profiles.ward_id`가 같은 병상만, `guardian`은 `guardian_links`의 환자만 읽는다.
+- 데이터별 보호 방식 전체는 **`docs/SECURITY.md`**가 기준이다.
+- 개인정보 필드(휴대폰·주소·연락용 이메일)는 backend가 **AES-256-GCM으로 암호화**해 `*_enc`(bytea)에 저장하고, 검색·중복 확인은 **HMAC-SHA256 값** `*_bidx`로 한다. 키는 `.env`의 `FIELD_ENCRYPTION_KEY`, `BLIND_INDEX_KEY` (D-015). 화면에는 backend API가 복호화해 필요한 사람에게만 보여준다.
 - 스키마가 바뀌면 `supabase/migrations/`에 SQL 마이그레이션을 추가하고 이 표를 갱신한다.
 
 ## 8. 자세 분류 로직 (MVP 규칙 기반)

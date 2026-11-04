@@ -92,6 +92,7 @@ npm run dev                     # http://localhost:5173
 | [SETUP.md](docs/SETUP.md) | 개발 환경 설치 |
 | [TASKS.md](docs/TASKS.md) | 단계별 할 일, 담당자 |
 | [DECISIONS.md](docs/DECISIONS.md) | 주요 결정과 이유 |
+| [SECURITY.md](docs/SECURITY.md) | 개인정보·비밀번호·키 보호 기준 |
 
 ## 팀
 

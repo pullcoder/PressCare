@@ -31,14 +31,15 @@ cp .env.example .env            # Windows: copy .env.example .env
 
 ### 방법 A. 클라우드 프로젝트 (팀 공용, 기본)
 1. [supabase.com](https://supabase.com)에서 프로젝트를 만든다. **Region: Northeast Asia (Seoul)**.
-2. Project Settings → API에서 URL, anon key, service_role key, JWT secret을 `.env`에 넣는다.
+2. Project Settings → API Keys에서 Project URL, **publishable 키**(`sb_publishable_...`), **secret 키**(`sb_secret_...`)를 `.env`에 넣는다. Legacy 탭(anon/service_role, JWT secret)은 쓰지 않는다.
+   - Project Settings → JWT Signing Keys에서 현재 키가 **ES256**인지 확인한다. Legacy HS256이면 JWKS가 비어 있어 backend 토큰 검증이 실패한다.
 3. 테이블·RLS를 올린다.
 ```bash
 npx supabase login
 npx supabase link --project-ref <프로젝트 ref>
 npx supabase db push             # supabase/migrations/ 의 SQL 적용
 ```
-- 프로젝트는 **한 명(PM)이 만들고** 키는 팀 비공개 채널로 공유한다. service_role 키는 backend 담당만.
+- 프로젝트는 **한 명(PM)이 만들고** 키는 팀 비공개 채널로 공유한다. secret 키와 암호화 키(`FIELD_ENCRYPTION_KEY`, `BLIND_INDEX_KEY`)는 backend 담당만.
 - 무료 플랜은 오래 쓰지 않으면 일시정지된다. 시연 전날 대시보드에서 상태를 확인한다.
 
 ### 방법 B. 로컬 Supabase (개인 실험·인터넷 없는 시연)
@@ -48,6 +49,7 @@ npx supabase db reset            # migrations + seed.sql 다시 적용
 npx supabase stop
 ```
 - `supabase/config.toml`의 `[db] major_version`을 클라우드 프로젝트 Postgres 버전과 같게 둔다.
+- ⚠️ 로컬 Supabase는 기본으로 HS256 토큰을 발급할 수 있어 JWKS 검증이 실패할 수 있다. `npx supabase gen signing-key --algorithm ES256`로 키를 만들어 `config.toml`의 `[auth] signing_keys_path`에 지정하고, 로그인 후 `/auth/v1/.well-known/jwks.json`에 키가 보이는지 확인한다. 안 되면 T4-1에서 팀과 대응 방법을 정한다.
 
 ### 테이블을 바꿀 때
 ```bash

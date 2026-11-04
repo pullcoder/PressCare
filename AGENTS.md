@@ -15,7 +15,7 @@ PressCare: 병상 웹캠 영상으로 환자 자세를 5가지(앙와위·좌측
 |------|---------------|
 | 기능을 새로 만든다 | `docs/PLAN.md`, `docs/TASKS.md` |
 | 파일 위치·구조를 정한다 | `docs/ARCHITECTURE.md` |
-| API·WebSocket을 만들거나 호출한다 | `docs/API.md` |
+| API·Supabase 조회·Realtime을 만들거나 호출한다 | `docs/API.md` |
 | 코드를 쓴다 (항상) | `docs/CONVENTIONS.md` |
 | 커밋·브랜치·PR | `docs/GIT_GUIDE.md` |
 | 설치·실행 | `docs/SETUP.md` |
@@ -26,9 +26,9 @@ PressCare: 병상 웹캠 영상으로 환자 자세를 5가지(앙와위·좌측
 ## 3. 기술 스택 (임의로 바꾸지 않기)
 
 - Edge: Python 3.11, OpenCV, MediaPipe Pose — 영상 처리·자세 추론은 **edge/에서만**
-- Backend: Python 3.11, FastAPI, SQLAlchemy 2.x, Pydantic v2, Alembic, WebSocket
-- Frontend: React + TypeScript (Vite), Tailwind CSS, Three.js + React Three Fiber
-- DB: PostgreSQL, Redis
+- Backend: Python 3.11, FastAPI, Pydantic v2, supabase-py — 이벤트 수신·타이머·알림 판단은 **backend에서만** (D-010)
+- Data: Supabase (PostgreSQL, Auth, RLS, Realtime) — Redis·자체 WebSocket·자체 JWT 로그인·Alembic은 쓰지 않는다 (D-009, D-011)
+- Frontend: React + TypeScript (Vite), Tailwind CSS, supabase-js, Three.js + React Three Fiber, PWA (네이티브 앱 없음)
 
 새 라이브러리 추가, 스택 변경, 폴더 구조 변경은 **사용자 확인 후** 진행하고 `docs/DECISIONS.md`에 기록한다.
 
@@ -36,6 +36,8 @@ PressCare: 병상 웹캠 영상으로 환자 자세를 5가지(앙와위·좌측
 
 1. **작은 단위로 작업한다.** 한 번에 한 기능·한 버그. 요청과 관계없는 파일은 고치지 않는다.
 2. **비밀 정보 금지.** API 키, 비밀번호, 토큰을 코드·문서·커밋에 넣지 않는다. `.env`만 사용하고, 새 변수는 `.env.example`에 빈 값으로 추가한다.
+   - `SUPABASE_SERVICE_ROLE_KEY`는 RLS를 무시하는 키다. **backend에서만** 쓰고, frontend 코드나 `VITE_` 변수에 절대 넣지 않는다.
+   - frontend는 Supabase 테이블을 **읽기만** 한다. 쓰기는 backend API를 거친다.
 3. **환자 영상은 밖으로 내보내지 않는다.** (D-002)
    - 원본 영상·프레임은 edge 메모리에서만 처리하고 디스크에 저장하지 않는다 (`SAVE_RAW_FRAMES=false`가 기본값).
    - 서버로 보내는 것은 **자세 라벨, 신뢰도, 관절 좌표(keypoints), 시각**뿐이다.
@@ -44,7 +46,8 @@ PressCare: 병상 웹캠 영상으로 환자 자세를 5가지(앙와위·좌측
 4. **진단하지 않는다.** 화면 문구·코드 주석·문서에서 "욕창 진단/예측 확률"처럼 의료 판단으로 읽히는 표현을 쓰지 않는다. 이 서비스는 **체위변경 기록·알림 보조 도구**다. (D-003)
 5. **AI 모델 라이선스.** 새 모델·가중치를 넣기 전에 상업적 이용 가능 여부를 확인하고 `docs/DECISIONS.md`에 적는다. **Ultralytics YOLOv8/YOLO11은 AGPL-3.0이므로 확인 전에는 넣지 않는다.** 포즈 추정기는 교체 가능한 인터페이스 뒤에 둔다. (D-004)
 6. **기준 시간·임계값은 하드코딩하지 않는다.** 체위변경 주기(`REPOSITION_INTERVAL_MIN`, 기본 120), 사전 경고(`REPOSITION_WARNING_MIN`, 기본 100), 자세 확정 시간(`POSTURE_STABLE_SEC`), offline 판정(`EDGE_OFFLINE_SEC`) 등은 설정에서 읽는다. `DEMO_TIME_SCALE`은 시연 전용이며 production에서는 항상 1로 동작해야 한다.
-7. **API를 바꾸면 `docs/API.md`도 같이 고친다.** DB 스키마를 바꾸면 Alembic 마이그레이션을 만들고 `docs/ARCHITECTURE.md`를 갱신한다.
+7. **API를 바꾸면 `docs/API.md`도 같이 고친다.** DB 스키마·RLS를 바꾸면 `supabase/migrations/`에 SQL 마이그레이션(`npx supabase migration new <이름>`)을 만들고 `docs/ARCHITECTURE.md` 7장을 갱신한다. Supabase 대시보드에서 테이블을 직접 고치지 않는다.
+   - 새 테이블은 **RLS를 켠 상태로** 만든다. 정책 없이 열어 두지 않는다.
 8. **main 브랜치에 직접 커밋·푸시하지 않는다.** `feature/...` 등 브랜치에서 작업한다. (`docs/GIT_GUIDE.md`)
 9. **주석과 문서는 한국어**, 코드 식별자(변수·함수·파일명)는 영어.
 
@@ -53,6 +56,9 @@ PressCare: 병상 웹캠 영상으로 환자 자세를 5가지(앙와위·좌측
 ```bash
 # backend/, edge/
 ruff check . && ruff format --check . && pytest
+
+# supabase/ (스키마를 바꿨을 때)
+npx supabase db reset            # 로컬에서 마이그레이션이 처음부터 적용되는지 확인
 
 # frontend/
 npm run lint && npm run typecheck && npm run build

@@ -34,7 +34,7 @@
 | T0-1 | 문서 세트 작성 (README, AGENTS/CLAUDE, docs/) | | ✅ |
 | T0-2 | GitHub 저장소 연결(첫 push), main 보호 규칙 설정 | | 🟨 |
 | T0-3 | Supabase 프로젝트 생성(서울), `supabase/` 폴더(config.toml, 첫 migration, seed.sql) | | ⬜ |
-| T0-4 | `backend/` FastAPI 뼈대 + Supabase 클라이언트 연결 | | ⬜ |
+| T0-4 | `backend/` FastAPI 뼈대 + Supabase 클라이언트 연결 | daeun04 | 🟨 |
 | T0-5 | `edge/` 뼈대: 웹캠 프레임 읽기 + 미리보기 | | ⬜ |
 | T0-6 | `frontend/` Vite + React + TS + Tailwind + supabase-js 뼈대 | | ⬜ |
 | T0-7 | ruff / ESLint / pytest 설정, PR 템플릿, GitHub Actions(테스트만) | | ⬜ |

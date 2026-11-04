@@ -1,0 +1,10 @@
+# PressCare backend (Python 3.11, D-005)
+fastapi>=0.115
+uvicorn[standard]>=0.30
+pydantic-settings>=2.4
+supabase>=2.18       # supabase-py. 새 API 키(sb_secret_...) 방식 사용 (D-014)
+httpx>=0.27
+
+# 개발·테스트
+pytest>=8
+ruff>=0.6

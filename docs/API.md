@@ -20,6 +20,12 @@
 - 형식: JSON, 시각은 ISO 8601 UTC (`2026-11-02T06:30:00Z`).
 - 실제 동작 명세는 서버 실행 후 `http://localhost:8000/docs`(Swagger)가 기준. **API를 바꾸면 이 문서도 같이 고친다.**
 
+### `GET /health` (FastAPI, 인증 없음) → 서버·Supabase 연결 확인
+```json
+{ "status": "ok", "app_env": "development", "supabase": "connected" }   // connected | unreachable | not_configured
+```
+- Supabase Auth 헬스(`/auth/v1/health`)로 연결만 확인하고 데이터는 읽지 않는다. 키 값은 응답에 넣지 않는다.
+
 ## 공통 에러 형식 (FastAPI)
 
 ```json

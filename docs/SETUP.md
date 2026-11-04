@@ -70,6 +70,8 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload   # http://localhost:8000/docs 열리면 성공
 ```
 
+- 연결 확인: `http://localhost:8000/api/v1/health` → `"supabase": "connected"`. 키를 아직 안 넣었으면 `not_configured`.
+
 ## 5. 엣지 에이전트 (웹캠 연결 PC)
 
 ```bash

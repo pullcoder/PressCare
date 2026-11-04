@@ -1,0 +1,7 @@
+# PressCare edge (Python 3.11, D-005)
+opencv-python>=4.9
+pydantic-settings>=2.4
+
+# 개발·테스트
+pytest>=8
+ruff>=0.6

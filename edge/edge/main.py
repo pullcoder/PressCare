@@ -27,6 +27,8 @@ WINDOW_NAME = "PressCare preview (q: quit)"
 
 # 미리보기에 그릴 뼈대 (얼굴·손가락은 생략)
 SKELETON: tuple[tuple[KP, KP], ...] = (
+    (KP.LEFT_EAR, KP.NOSE),
+    (KP.NOSE, KP.RIGHT_EAR),
     (KP.LEFT_SHOULDER, KP.RIGHT_SHOULDER),
     (KP.LEFT_SHOULDER, KP.LEFT_ELBOW),
     (KP.LEFT_ELBOW, KP.LEFT_WRIST),
@@ -41,6 +43,23 @@ SKELETON: tuple[tuple[KP, KP], ...] = (
     (KP.RIGHT_KNEE, KP.RIGHT_ANKLE),
 )
 MIN_DRAW_VISIBILITY = 0.3
+# 점으로 표시할 머리·몸통 관절과 화면에 신뢰도를 적을 관절
+HEAD_AND_CORE: tuple[KP, ...] = (
+    KP.NOSE,
+    KP.LEFT_EAR,
+    KP.RIGHT_EAR,
+    KP.LEFT_SHOULDER,
+    KP.RIGHT_SHOULDER,
+    KP.LEFT_HIP,
+    KP.RIGHT_HIP,
+)
+CORE_LABELS: tuple[tuple[str, KP], ...] = (
+    ("nose", KP.NOSE),
+    ("L shoulder", KP.LEFT_SHOULDER),
+    ("R shoulder", KP.RIGHT_SHOULDER),
+    ("L hip", KP.LEFT_HIP),
+    ("R hip", KP.RIGHT_HIP),
+)
 
 
 @dataclass
@@ -86,24 +105,40 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def vis_color(visibility: float) -> tuple[int, int, int]:
+    """신뢰도별 색 (BGR): 0.6 이상 초록, 0.3 이상 노랑, 그 아래 빨강."""
+    if visibility >= 0.6:
+        return (0, 200, 0)
+    if visibility >= MIN_DRAW_VISIBILITY:
+        return (0, 220, 255)
+    return (0, 0, 255)
+
+
 def draw_overlay(frame, bed_id: str, fps: float, pose: PoseResult | None) -> None:
-    """미리보기 화면에만 그린다. 프레임은 저장하지 않는다. (cv2 글자는 영문만 가능)"""
+    """미리보기 화면에만 그린다. 프레임은 저장하지 않는다. (cv2 글자는 영문만 가능)
+
+    신뢰도가 낮은 관절도 빨간색으로 그려서 모델이 어디를 놓치는지 보이게 한다.
+    """
     h, w = frame.shape[:2]
+
+    def pt(kp: KP) -> tuple[int, int]:
+        return int(pose[kp].x * w), int(pose[kp].y * h)
+
+    lines = [f"{bed_id}  {fps:.1f} fps"]
     if pose is not None:
         for a, b in SKELETON:
-            ka, kb = pose[a], pose[b]
-            if min(ka.visibility, kb.visibility) < MIN_DRAW_VISIBILITY:
-                continue
-            pa = (int(ka.x * w), int(ka.y * h))
-            pb = (int(kb.x * w), int(kb.y * h))
-            cv2.line(frame, pa, pb, (0, 200, 255), 2)
-        status = f"person  vis {pose.mean_visibility():.2f}"
+            v = min(pose[a].visibility, pose[b].visibility)
+            cv2.line(frame, pt(a), pt(b), vis_color(v), 3 if v >= MIN_DRAW_VISIBILITY else 1)
+        for kp in HEAD_AND_CORE:
+            cv2.circle(frame, pt(kp), 6, vis_color(pose[kp].visibility), -1)
+        lines.append(f"person  core vis {pose.mean_visibility():.2f}")
+        lines += [f"{name} {pose[kp].visibility:.2f}" for name, kp in CORE_LABELS]
     else:
-        status = "no person"
-    cv2.putText(
-        frame, f"{bed_id}  {fps:.1f} fps", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2
-    )
-    cv2.putText(frame, status, (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+        lines.append("no person")
+    for i, text in enumerate(lines):
+        y = 30 + i * 26
+        cv2.putText(frame, text, (10, y), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 4)
+        cv2.putText(frame, text, (10, y), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
 
 
 def run(camera: str, bed_id: str, fps: float, model: str, preview: bool) -> int:

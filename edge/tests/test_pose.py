@@ -103,3 +103,12 @@ def test_detection_stats_summary():
     assert stats.detection_rate == 0.5
     assert stats.mean_visibility == pytest.approx(0.8)
     assert "50%" in stats.summary()
+
+
+def test_draw_overlay_runs_with_and_without_person():
+    from edge.main import draw_overlay
+
+    frame = np.zeros((240, 320, 3), np.uint8)
+    draw_overlay(frame, "BED-01", 5.0, make_pose(0.1))  # 신뢰도 낮아도 그린다
+    draw_overlay(frame, "BED-01", 5.0, None)
+    assert frame.any()

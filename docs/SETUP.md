@@ -77,10 +77,12 @@ cd edge
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
+python -m edge.download_model                                # 처음 한 번: 포즈 모델 받기
 python -m edge.main --camera 0 --bed-id BED-01 --preview   # --preview: 관절 표시 창 (개발용)
 ```
 
-- 포즈 모델 파일(`pose_landmarker.task`)은 저장소에 없다. MediaPipe 공식 페이지에서 받아 `edge/models/weights/`에 둔다.
+- 포즈 모델 파일(`pose_landmarker_lite.task`)은 저장소에 없다. 처음 한 번 `python -m edge.download_model`을 실행하면 `edge/models/weights/`에 받아진다 (`--variant full`로 더 정확한 모델).
+- 종료(`q` 또는 Ctrl+C)할 때 사람 검출률과 주요 관절 평균 신뢰도가 출력된다. 인식 검증(T1-0)에 참고한다.
 - `EDGE_DEVICE_TOKEN`은 `POST /edge-devices`(API.md 3장)로 발급받아 `.env`에 넣는다.
 - `--preview` 창은 개발용이다. **edge 코드에 녹화·프레임 저장 기능을 만들지 않는다** (D-002).
 

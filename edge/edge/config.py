@@ -6,6 +6,7 @@
 
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -23,6 +24,8 @@ class EdgeSettings(BaseSettings):
     camera_source: str = "0"  # 웹캠 번호 또는 RTSP 주소
     camera_fps: float = 5.0  # 자세 판별엔 초당 5프레임이면 충분
     save_raw_frames: bool = False  # 항상 False. 저장 기능은 만들지 않는다 (D-002)
+    pose_backend: Literal["mediapipe", "yolo"] = "mediapipe"  # yolo 는 사용 금지 (D-004)
+    pose_model: Literal["lite", "full", "heavy"] = "lite"  # 정확도↑ 속도↓ 순
 
 
 @lru_cache

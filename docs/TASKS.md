@@ -34,7 +34,7 @@
 | T0-1 | 문서 세트 작성 (README, AGENTS/CLAUDE, docs/) | | ✅ |
 | T0-2 | GitHub 저장소 연결(첫 push), main 보호 규칙 설정 | | 🟨 |
 | T0-3 | Supabase 프로젝트 생성(서울), `supabase/` 폴더(config.toml, 첫 migration, seed.sql) | | ⬜ |
-| T0-4 | `backend/` FastAPI 뼈대 + Supabase 클라이언트 연결 | | ⬜ |
+| T0-4 | `backend/` FastAPI 뼈대 + Supabase 클라이언트 연결 | daeun04 | 🟨 |
 | T0-5 | `edge/` 뼈대: 웹캠 프레임 읽기 + 미리보기 | daeun04 | 🟨 |
 | T0-6 | `frontend/` Vite + React + TS + Tailwind + supabase-js 뼈대 | | ⬜ |
 | T0-7 | ruff / ESLint / pytest 설정, PR 템플릿, GitHub Actions(테스트만) | | ⬜ |
@@ -56,7 +56,7 @@
 |----|------|------|------|
 | T2-1 | 테이블 마이그레이션 (profiles, wards, beds, patients, edge_devices, bed_status, posture_events, alerts) | | ⬜ |
 | T2-2 | RLS 정책 (admin 전체 / nurse 소속 병동), Realtime publication(bed_status, alerts) | | ⬜ |
-| T2-3 | `POST /edge/posture-events`, heartbeat, 기기 토큰 발급 | | ⬜ |
+| T2-3 | `POST /edge/posture-events`, heartbeat, 기기 토큰 발급 | daeun04 | 🟨 |
 | T2-4 | `bed_status` 갱신 로직 (`posture_since`, offline 판정) | | ⬜ |
 | T2-5 | 수동 기록/보정 API | | ⬜ |
 | T2-6 | 가짜 병상 시뮬레이터 `tools/fake_beds.py` | | ⬜ |

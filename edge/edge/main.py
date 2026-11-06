@@ -1,7 +1,7 @@
 """엣지 에이전트 진입점.
 
-지금은 카메라 프레임 → 포즈 추정(T1-1)까지 하고, --preview 창에 관절을 그린다.
-자세 분류(T1-2)·깜빡임 방지(T1-3)·서버 전송(T2-3)은 이후 단계에서 붙인다.
+카메라 프레임 → 포즈 추정(T1-1) → 자세 분류(T1-2) → 깜빡임 방지(T1-3) → backend 전송(T2-3).
+--preview 창에 관절과 판정을 그린다. 영상은 저장·전송하지 않는다 (D-002).
 종료할 때 사람 검출률과 주요 관절 신뢰도를 출력한다 (인식 검증 T1-0 참고용).
 
 실행: edge/ 폴더에서
@@ -17,7 +17,11 @@ from dataclasses import dataclass, field
 import cv2
 
 from edge.capture import CameraError, FrameSource
+from edge.classify.posture import PostureClassifier, Thresholds
+from edge.classify.stability import StabilityFilter
+from edge.client import BackendClient
 from edge.config import get_settings
+from edge.pipeline import FrameDecision, PosturePipeline
 from edge.pose import KP, PoseResult, create_estimator
 from edge.pose.mediapipe_pose import PoseModelError, default_model_path
 
@@ -102,6 +106,9 @@ def build_parser() -> argparse.ArgumentParser:
         "--model", default=settings.pose_model, choices=("lite", "full", "heavy"), help="포즈 모델"
     )
     parser.add_argument("--preview", action="store_true", help="개발용 미리보기 창 표시")
+    parser.add_argument(
+        "--no-send", action="store_true", help="backend 로 보내지 않기 (인식만 확인)"
+    )
     return parser
 
 
@@ -114,7 +121,14 @@ def vis_color(visibility: float) -> tuple[int, int, int]:
     return (0, 0, 255)
 
 
-def draw_overlay(frame, bed_id: str, fps: float, pose: PoseResult | None) -> None:
+def draw_overlay(
+    frame,
+    bed_id: str,
+    fps: float,
+    pose: PoseResult | None,
+    decision: FrameDecision | None = None,
+    confirmed: str | None = None,
+) -> None:
     """미리보기 화면에만 그린다. 프레임은 저장하지 않는다. (cv2 글자는 영문만 가능)
 
     신뢰도가 낮은 관절도 빨간색으로 그려서 모델이 어디를 놓치는지 보이게 한다.
@@ -135,13 +149,16 @@ def draw_overlay(frame, bed_id: str, fps: float, pose: PoseResult | None) -> Non
         lines += [f"{name} {pose[kp].visibility:.2f}" for name, kp in CORE_LABELS]
     else:
         lines.append("no person")
+    if decision is not None:
+        lines.append(f"now: {decision.posture} ({decision.reason})")
+        lines.append(f"confirmed: {confirmed or '-'}")
     for i, text in enumerate(lines):
         y = 30 + i * 26
         cv2.putText(frame, text, (10, y), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 4)
         cv2.putText(frame, text, (10, y), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
 
 
-def run(camera: str, bed_id: str, fps: float, model: str, preview: bool) -> int:
+def run(camera: str, bed_id: str, fps: float, model: str, preview: bool, send: bool = True) -> int:
     settings = get_settings()
     if settings.save_raw_frames:
         # 저장 기능은 존재하지 않는다. 설정이 켜져 있어도 무시하고 알린다. (D-002)
@@ -161,7 +178,26 @@ def run(camera: str, bed_id: str, fps: float, model: str, preview: bool) -> int:
         estimator.close()
         return 1
 
-    logger.info("시작: bed=%s fps=%.1f model=%s preview=%s", bed_id, fps, model, preview)
+    client = (
+        BackendClient(settings.edge_api_base_url, settings.edge_device_token, bed_id)
+        if send
+        else None
+    )
+    pipeline = PosturePipeline(
+        PostureClassifier(Thresholds(min_confidence=settings.posture_min_confidence)),
+        StabilityFilter(stable_sec=settings.posture_stable_sec),
+        client,
+        heartbeat_sec=settings.edge_heartbeat_sec,
+    )
+
+    logger.info(
+        "시작: bed=%s fps=%.1f model=%s 확정=%.0f초 전송=%s",
+        bed_id,
+        fps,
+        model,
+        settings.posture_stable_sec,
+        settings.edge_api_base_url if send else "끔",
+    )
     stats = DetectionStats()
     started = time.monotonic()
     try:
@@ -169,9 +205,14 @@ def run(camera: str, bed_id: str, fps: float, model: str, preview: bool) -> int:
             elapsed = time.monotonic() - started
             pose = estimator.estimate(frame, int(elapsed * 1000))
             stats.add(pose)
-            # TODO(T1-2, T1-3): posture_classifier → stability_filter → client(T2-3)
+            actual_fps = stats.frames / max(elapsed, 1e-6)
+            decision = pipeline.process(pose, time.time(), actual_fps)
+            if decision.confirmed is not None:
+                logger.info("자세 확정: %s", decision.confirmed.posture)
             if preview:
-                draw_overlay(frame, bed_id, stats.frames / max(elapsed, 1e-6), pose)
+                draw_overlay(
+                    frame, bed_id, actual_fps, pose, decision, pipeline.stability.confirmed
+                )
                 cv2.imshow(WINDOW_NAME, frame)
                 if cv2.waitKey(1) & 0xFF == ord("q"):
                     break
@@ -180,6 +221,8 @@ def run(camera: str, bed_id: str, fps: float, model: str, preview: bool) -> int:
     finally:
         source.close()
         estimator.close()
+        if client is not None:
+            client.close()
         if preview:
             cv2.destroyAllWindows()
     logger.info("종료: %s", stats.summary())
@@ -189,7 +232,9 @@ def run(camera: str, bed_id: str, fps: float, model: str, preview: bool) -> int:
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     args = build_parser().parse_args()
-    raise SystemExit(run(args.camera, args.bed_id, args.fps, args.model, args.preview))
+    raise SystemExit(
+        run(args.camera, args.bed_id, args.fps, args.model, args.preview, not args.no_send)
+    )
 
 
 if __name__ == "__main__":

@@ -28,6 +28,9 @@ class EdgeSettings(BaseSettings):
     pose_model: Literal["lite", "full", "heavy"] = "lite"  # 정확도↑ 속도↓ 순
     posture_stable_sec: float = 30.0  # 같은 자세가 이만큼 이어져야 확정 (T1-3)
     posture_min_confidence: float = 0.6  # 이보다 낮으면 unknown (T1-2)
+    edge_api_base_url: str = "http://localhost:8000/api/v1"
+    edge_device_token: str = ""  # 기기 토큰 (Supabase 준비 후 POST /edge-devices 로 발급)
+    edge_heartbeat_sec: float = 60.0
 
 
 @lru_cache

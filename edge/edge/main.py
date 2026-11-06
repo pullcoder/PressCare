@@ -16,8 +16,9 @@ from dataclasses import dataclass, field
 
 import cv2
 
+from edge import calibration
 from edge.capture import CameraError, FrameSource
-from edge.classify.posture import PostureClassifier, Thresholds
+from edge.classify.posture import PostureClassifier, Thresholds, measure
 from edge.classify.stability import StabilityFilter
 from edge.client import BackendClient
 from edge.config import get_settings
@@ -128,6 +129,7 @@ def draw_overlay(
     pose: PoseResult | None,
     decision: FrameDecision | None = None,
     confirmed: str | None = None,
+    calib_text: str = "",
 ) -> None:
     """미리보기 화면에만 그린다. 프레임은 저장하지 않는다. (cv2 글자는 영문만 가능)
 
@@ -152,6 +154,8 @@ def draw_overlay(
     if decision is not None:
         lines.append(f"now: {decision.posture} ({decision.reason})")
         lines.append(f"confirmed: {confirmed or '-'}")
+    if calib_text:
+        lines.append(calib_text)
     for i, text in enumerate(lines):
         y = 30 + i * 26
         cv2.putText(frame, text, (10, y), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 4)
@@ -183,8 +187,15 @@ def run(camera: str, bed_id: str, fps: float, model: str, preview: bool, send: b
         if send
         else None
     )
+    cal = calibration.load(bed_id)
+    if cal is None:
+        logger.info("기준 자세 없음: 미리보기 창에서 바로 누운 채로 c 키를 누르면 등록됩니다.")
+    else:
+        logger.info("기준 자세 불러옴: %s", cal)
+    classifier = PostureClassifier(Thresholds(min_confidence=settings.posture_min_confidence), cal)
+    collector: calibration.CalibrationCollector | None = None
     pipeline = PosturePipeline(
-        PostureClassifier(Thresholds(min_confidence=settings.posture_min_confidence)),
+        classifier,
         StabilityFilter(stable_sec=settings.posture_stable_sec),
         client,
         heartbeat_sec=settings.edge_heartbeat_sec,
@@ -209,13 +220,36 @@ def run(camera: str, bed_id: str, fps: float, model: str, preview: bool, send: b
             decision = pipeline.process(pose, time.time(), actual_fps)
             if decision.confirmed is not None:
                 logger.info("자세 확정: %s", decision.confirmed.posture)
+            if collector is not None and pose is not None:
+                new_cal = collector.add(measure(pose))
+                if new_cal is not None:
+                    classifier.calibration = new_cal
+                    path = calibration.save(bed_id, new_cal)
+                    logger.info("기준 자세 저장: %s (%s)", new_cal, path)
+                    collector = None
             if preview:
+                if collector is not None:
+                    calib_text = f"calibrating... lie flat {collector.progress}"
+                elif classifier.calibration is None:
+                    calib_text = "calib: none (lie flat + press c)"
+                else:
+                    calib_text = "calib: ok (c: redo)"
                 draw_overlay(
-                    frame, bed_id, actual_fps, pose, decision, pipeline.stability.confirmed
+                    frame,
+                    bed_id,
+                    actual_fps,
+                    pose,
+                    decision,
+                    pipeline.stability.confirmed,
+                    calib_text,
                 )
                 cv2.imshow(WINDOW_NAME, frame)
-                if cv2.waitKey(1) & 0xFF == ord("q"):
+                key = cv2.waitKey(1) & 0xFF
+                if key == ord("q"):
                     break
+                if key == ord("c"):
+                    collector = calibration.CalibrationCollector()
+                    logger.info("기준 자세 등록 시작: 바로 누운 채로 잠시 기다리세요.")
     except KeyboardInterrupt:
         pass
     finally:

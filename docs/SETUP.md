@@ -85,6 +85,7 @@ python -m edge.main --camera 0 --bed-id BED-01 --preview   # --preview: 관절 �
 
 - 포즈 모델 파일(`pose_landmarker_lite.task`)은 저장소에 없다. 처음 한 번 `python -m edge.download_model`을 실행하면 `edge/models/weights/`에 받아진다 (`--variant full`로 더 정확한 모델).
 - 종료(`q` 또는 Ctrl+C)할 때 사람 검출률과 주요 관절 평균 신뢰도가 출력된다. 인식 검증(T1-0)에 참고한다.
+- **기준 자세 등록**: 카메라가 사선·옆에 있으면 바로 누워도 측위로 보일 수 있다. 미리보기 창에서 바로 누운 채로 `c` 키를 누르면 2초쯤 측정해 병상별 기준을 `edge/calibration/<병상>.json`에 저장한다(숫자 3개, git 제외). 카메라를 옮기면 다시 등록한다.
 - `EDGE_DEVICE_TOKEN`은 `POST /edge-devices`(API.md 3장)로 발급받아 `.env`에 넣는다.
 - `--preview` 창은 개발용이다. **edge 코드에 녹화·프레임 저장 기능을 만들지 않는다** (D-002).
 

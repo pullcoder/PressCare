@@ -46,6 +46,9 @@ htmlcov/
 *.mkv
 *.log
 
+# ===== 병상별 기준 자세 (카메라 위치마다 다름, 숫자만)
+/edge/calibration/
+
 # ===== AI 모델 가중치 (용량·라이선스 문제로 커밋 금지) =====
 models/weights/
 *.pt

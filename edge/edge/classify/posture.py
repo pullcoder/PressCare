@@ -10,6 +10,10 @@
 3. 앉음: 어깨–엉덩이–무릎 각도가 접혀 있으면 sitting (무릎이 보일 때만)
 4. 나머지 → supine
 
+카메라가 사선·옆에 있으면 바로 누워도 한쪽 어깨가 가깝고 폭이 좁아 보인다.
+그래서 병상마다 "바로 누운 자세"를 한 번 등록(Calibration)하고, 그 기준에서
+얼마나 달라졌는지로 판단한다. 등록 전에는 카메라가 위에서 본다고 가정한다.
+
 ⚠ 기준값은 임시값이다. 1주차 인식 검증(T1-0) 결과로 조정한다 (D-013).
 """
 
@@ -27,7 +31,25 @@ class Thresholds:
     lateral_z_diff: float = 0.12  # 좌우 어깨·엉덩이 z 차이 평균이 이 이상이면 측위
     narrow_shoulder_ratio: float = 0.35  # 어깨 폭 / 몸통 길이가 이 미만이면 측위
     sitting_hip_angle: float = 125.0  # 어깨–엉덩이–무릎 각도(도)가 이 미만이면 앉음
+    narrow_ratio_factor: float = 0.6  # 보정 후: 어깨 폭이 기준의 이 배 미만이면 측위
+    sitting_angle_drop: float = 45.0  # 보정 후: 엉덩이 각도가 기준보다 이만큼 줄면 앉음
     min_knee_visibility: float = 0.5
+
+
+@dataclass(frozen=True, slots=True)
+class Calibration:
+    """바로 누운 자세일 때 이 카메라에서 보이는 값 (병상마다 1개). 숫자만 저장한다."""
+
+    z_diff: float
+    shoulder_ratio: float
+    hip_angle: float | None = None  # 무릎이 안 보였으면 None
+
+
+@dataclass(frozen=True, slots=True)
+class Measures:
+    z_diff: float  # 왼쪽 - 오른쪽 깊이 (어깨·엉덩이 평균). + 면 왼쪽이 더 멀다
+    shoulder_ratio: float  # 어깨 폭 / 몸통 길이
+    hip_angle: float | None  # 어깨–엉덩이–무릎 각도 (무릎이 안 보이면 None)
 
 
 @dataclass(frozen=True, slots=True)
@@ -56,9 +78,26 @@ def _angle(a: Keypoint, b: Keypoint, c: Keypoint) -> float:
     return math.degrees(math.acos(cos))
 
 
+def measure(pose: PoseResult, min_knee_visibility: float = 0.5) -> Measures:
+    ls, rs = pose[KP.LEFT_SHOULDER], pose[KP.RIGHT_SHOULDER]
+    lh, rh = pose[KP.LEFT_HIP], pose[KP.RIGHT_HIP]
+    lk, rk = pose[KP.LEFT_KNEE], pose[KP.RIGHT_KNEE]
+    # z 가 클수록 카메라에서 멀다. 왼쪽이 멀면(아래) 왼쪽으로 누운 것 (카메라가 위에 있을 때).
+    z_diff = ((ls.z - rs.z) + (lh.z - rh.z)) / 2
+    torso = _dist(_mid(ls, rs), _mid(lh, rh))
+    ratio = math.hypot(ls.x - rs.x, ls.y - rs.y) / torso if torso > 0 else 0.0
+    hip = None
+    if min(lk.visibility, rk.visibility) >= min_knee_visibility:
+        hip = (_angle(ls, lh, lk) + _angle(rs, rh, rk)) / 2
+    return Measures(z_diff, ratio, hip)
+
+
 class PostureClassifier:
-    def __init__(self, thresholds: Thresholds | None = None) -> None:
+    def __init__(
+        self, thresholds: Thresholds | None = None, calibration: Calibration | None = None
+    ) -> None:
         self.t = thresholds or Thresholds()
+        self.calibration = calibration
 
     def classify(self, pose: PoseResult) -> PostureResult:
         t = self.t
@@ -66,22 +105,23 @@ class PostureClassifier:
         if conf < t.min_confidence:
             return PostureResult("unknown", conf, f"low vis {conf:.2f}")
 
-        ls, rs = pose[KP.LEFT_SHOULDER], pose[KP.RIGHT_SHOULDER]
-        lh, rh = pose[KP.LEFT_HIP], pose[KP.RIGHT_HIP]
+        m = measure(pose, t.min_knee_visibility)
+        cal = self.calibration
+        dz = m.z_diff - (cal.z_diff if cal else 0.0)
+        narrow_limit = (
+            cal.shoulder_ratio * t.narrow_ratio_factor if cal else t.narrow_shoulder_ratio
+        )
 
-        # z 가 클수록 카메라에서 멀다. 왼쪽이 멀면(아래) 왼쪽으로 누운 것.
-        z_diff = ((ls.z - rs.z) + (lh.z - rh.z)) / 2
-        torso = _dist(_mid(ls, rs), _mid(lh, rh))
-        ratio = math.hypot(ls.x - rs.x, ls.y - rs.y) / torso if torso > 0 else 0.0
+        if abs(dz) >= t.lateral_z_diff or m.shoulder_ratio < narrow_limit:
+            side = "left_lateral" if dz >= 0 else "right_lateral"
+            return PostureResult(side, conf, f"lateral dz {dz:+.2f} w {m.shoulder_ratio:.2f}")
 
-        if abs(z_diff) >= t.lateral_z_diff or ratio < t.narrow_shoulder_ratio:
-            side = "left_lateral" if z_diff >= 0 else "right_lateral"
-            return PostureResult(side, conf, f"lateral dz {z_diff:+.2f} w {ratio:.2f}")
+        if m.hip_angle is not None:
+            if cal and cal.hip_angle is not None:
+                sitting = m.hip_angle < cal.hip_angle - t.sitting_angle_drop
+            else:
+                sitting = m.hip_angle < t.sitting_hip_angle
+            if sitting:
+                return PostureResult("sitting", conf, f"hip {m.hip_angle:.0f}deg")
 
-        lk, rk = pose[KP.LEFT_KNEE], pose[KP.RIGHT_KNEE]
-        if min(lk.visibility, rk.visibility) >= t.min_knee_visibility:
-            hip_angle = (_angle(ls, lh, lk) + _angle(rs, rh, rk)) / 2
-            if hip_angle < t.sitting_hip_angle:
-                return PostureResult("sitting", conf, f"hip {hip_angle:.0f}deg")
-
-        return PostureResult("supine", conf, f"dz {z_diff:+.2f} w {ratio:.2f}")
+        return PostureResult("supine", conf, f"dz {dz:+.2f} w {m.shoulder_ratio:.2f}")

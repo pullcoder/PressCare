@@ -71,3 +71,24 @@ def test_hidden_knees_skip_sitting_rule():
 def test_thresholds_are_adjustable():
     strict = PostureClassifier(Thresholds(lateral_z_diff=0.5))
     assert strict.classify(body(z_left=0.1)).posture == "supine"
+
+
+def angled_supine() -> PoseResult:
+    """옆 사선 카메라로 본 '바로 누운' 사람: 한쪽이 가깝고 어깨가 좁아 보인다."""
+    return body(shoulder_w=0.06, z_left=0.08)
+
+
+def test_angled_camera_misreads_without_calibration():
+    assert clf.classify(angled_supine()).posture != "supine"
+
+
+def test_calibration_makes_angled_supine_supine():
+    from edge.classify.posture import Calibration, measure
+
+    m = measure(angled_supine())
+    cal = Calibration(m.z_diff, m.shoulder_ratio, m.hip_angle)
+    calibrated = PostureClassifier(calibration=cal)
+    assert calibrated.classify(angled_supine()).posture == "supine"
+    # 기준보다 한쪽이 더 멀어지면(돌아누우면) 측위
+    assert calibrated.classify(body(shoulder_w=0.06, z_left=0.2)).posture == "left_lateral"
+    assert calibrated.classify(body(shoulder_w=0.06, z_left=-0.06)).posture == "right_lateral"

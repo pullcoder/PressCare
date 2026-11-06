@@ -26,6 +26,8 @@ class EdgeSettings(BaseSettings):
     save_raw_frames: bool = False  # 항상 False. 저장 기능은 만들지 않는다 (D-002)
     pose_backend: Literal["mediapipe", "yolo"] = "mediapipe"  # yolo 는 사용 금지 (D-004)
     pose_model: Literal["lite", "full", "heavy"] = "lite"  # 정확도↑ 속도↓ 순
+    posture_stable_sec: float = 30.0  # 같은 자세가 이만큼 이어져야 확정 (T1-3)
+    posture_min_confidence: float = 0.6  # 이보다 낮으면 unknown (T1-2)
 
 
 @lru_cache

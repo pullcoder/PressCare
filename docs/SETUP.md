@@ -108,6 +108,8 @@ cd frontend
 npm install
 npm run dev                     # http://localhost:5173
 ```
+- 루트 `.env`의 `VITE_` 값만 읽는다(`vite.config.ts`의 `envDir: '..'`). Supabase 값이 비어 있으면 대시보드는 **예시 데이터**를 보여준다.
+- `npm test`(vitest), `npm run lint`(oxlint), `npm run format`(Prettier), `npm run build`로 확인한다.
 - 경고음은 브라우저 정책상 **페이지에서 한 번 클릭한 뒤에만** 난다. 대시보드의 "알림 켜기" 버튼을 누른다.
 - 웹 푸시는 `localhost` 또는 HTTPS에서만 동작한다. 아이폰은 iOS 16.4 이상에서 홈 화면에 추가해야 받는다.
 

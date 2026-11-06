@@ -46,7 +46,10 @@ def landmarks_to_result(poses: Sequence[Sequence[Any]]) -> PoseResult | None:
     if not poses:
         return None
     return PoseResult(
-        tuple(Keypoint(float(lm.x), float(lm.y), float(lm.visibility or 0.0)) for lm in poses[0])
+        tuple(
+            Keypoint(float(lm.x), float(lm.y), float(lm.visibility or 0.0), float(lm.z or 0.0))
+            for lm in poses[0]
+        )
     )
 
 

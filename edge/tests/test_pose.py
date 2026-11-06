@@ -48,8 +48,8 @@ def test_to_payload_matches_api_format():
 
 
 def test_landmarks_to_result_takes_first_person_and_handles_missing_visibility():
-    person = [SimpleNamespace(x=0.1, y=0.2, visibility=None)] * 33
-    other = [SimpleNamespace(x=0.9, y=0.9, visibility=1.0)] * 33
+    person = [SimpleNamespace(x=0.1, y=0.2, visibility=None, z=None)] * 33
+    other = [SimpleNamespace(x=0.9, y=0.9, visibility=1.0, z=0.0)] * 33
     pose = landmarks_to_result([person, other])
     assert pose is not None
     assert pose[0] == Keypoint(0.1, 0.2, 0.0)

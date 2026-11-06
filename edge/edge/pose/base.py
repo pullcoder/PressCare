@@ -71,6 +71,7 @@ class Keypoint:
     x: float  # 화면 왼쪽 0 → 오른쪽 1 (화면 밖이면 범위를 벗어날 수 있음)
     y: float  # 화면 위 0 → 아래 1
     visibility: float  # 0~1, 관절이 보이는 정도
+    z: float = 0.0  # 카메라와의 상대 거리. 작을수록 가깝다 (엉덩이 중심 기준). 측위 판단용
 
 
 @dataclass(frozen=True, slots=True)

@@ -36,7 +36,7 @@
 | T0-3 | Supabase 프로젝트 생성(서울), `supabase/` 폴더(config.toml, 첫 migration, seed.sql) | | ⬜ |
 | T0-4 | `backend/` FastAPI 뼈대 + Supabase 클라이언트 연결 | daeun04 | 🟨 |
 | T0-5 | `edge/` 뼈대: 웹캠 프레임 읽기 + 미리보기 | daeun04 | 🟨 |
-| T0-6 | `frontend/` Vite + React + TS + Tailwind + supabase-js 뼈대 | | ⬜ |
+| T0-6 | `frontend/` Vite + React + TS + Tailwind + supabase-js 뼈대 | daeun04 | 🟨 |
 | T0-7 | ruff / ESLint / pytest 설정, PR 템플릿, GitHub Actions(테스트만) | | ⬜ |
 
 ## T1. 자세 인식 (MVP 핵심)
@@ -68,7 +68,7 @@
 |----|------|------|------|
 | T3-1 | 알림 판단 루프 (warning 100분 / critical 120분) + 시간 가속 `DEMO_TIME_SCALE` | | ⬜ |
 | T3-2 | Supabase Realtime 구독 훅 (`useBedStatus`, `useAlerts`) | | ⬜ |
-| T3-3 | 병동 대시보드 (병상 카드, 색상 상태, 경과 시간) | | ⬜ |
+| T3-3 | 병동 대시보드 (병상 카드, 색상 상태, 경과 시간) | daeun04 | 🟨 |
 | T3-4 | 경고음 반복 + 화면 깜빡임 + "알림 켜기" 버튼 | | ⬜ |
 | T3-5 | 병상 상세 + 타임라인 화면 | | ⬜ |
 | T3-6 | 알림 목록 + 확인(ack) | | ⬜ |

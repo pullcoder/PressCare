@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 def parse_source(source: str) -> int | str:
-    """'0' 같은 숫자는 웹캠 번호, 그 외(rtsp://...)는 주소로 본다."""
+    """'0' 같은 숫자는 카메라 번호, 그 외(rtsp://..., http://...)는 주소로 본다."""
     return int(source) if source.strip().isdigit() else source.strip()
 
 
@@ -39,9 +39,7 @@ class FrameSource:
                 "카메라를 열 수 없습니다. 다른 앱이 쓰는 중인지, 카메라 권한이 있는지, "
                 "--camera 번호가 맞는지 확인하세요."
             )
-        logger.info(
-            "카메라 열림 (source=%s)", "webcam" if isinstance(self._source, int) else "rtsp"
-        )
+        logger.info("카메라 열림 (source=%s)", "camera" if isinstance(self._source, int) else "url")
 
     def frames(self) -> Iterator[np.ndarray]:
         """FPS 간격으로 프레임을 하나씩 돌려준다. 읽기에 실패하면 멈춘다."""

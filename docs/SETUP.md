@@ -86,6 +86,10 @@ python -m edge.main --camera 0 --bed-id BED-01 --preview   # --preview: 관절 �
 - `EDGE_DEVICE_TOKEN`은 `POST /edge-devices`(API.md 3장)로 발급받아 `.env`에 넣는다.
 - `--preview` 창은 개발용이다. **edge 코드에 녹화·프레임 저장 기능을 만들지 않는다** (D-002).
 
+### 휴대폰을 카메라로 쓰기
+- **iPhone + Mac (연속성 카메라)**: 같은 Apple ID로 로그인, Wi-Fi·Bluetooth 켜기, iPhone을 거치대에 고정하면 Mac에 카메라로 잡힌다. `python -m edge.list_cameras`로 번호를 확인해 `--camera <번호>`로 실행한다.
+- **그 밖의 휴대폰**: IP 카메라 앱으로 같은 Wi-Fi에 영상을 내보내고 `--camera http://<휴대폰IP>:<포트>/...` 또는 `rtsp://...` 주소를 넣는다. 영상은 같은 공유기 안에서만 오가게 한다 (D-002).
+
 ### 카메라 없이 개발하기
 ```bash
 python tools/fake_beds.py --beds 4 --time-scale 60   # 가짜 병상 4개가 자세 이벤트를 보냄

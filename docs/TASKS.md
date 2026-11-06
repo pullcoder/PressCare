@@ -56,7 +56,7 @@
 |----|------|------|------|
 | T2-1 | 테이블 마이그레이션 (profiles, wards, beds, patients, edge_devices, bed_status, posture_events, alerts) | | ⬜ |
 | T2-2 | RLS 정책 (admin 전체 / nurse 소속 병동), Realtime publication(bed_status, alerts) | | ⬜ |
-| T2-3 | `POST /edge/posture-events`, heartbeat, 기기 토큰 발급 | | ⬜ |
+| T2-3 | `POST /edge/posture-events`, heartbeat, 기기 토큰 발급 | daeun04 | 🟨 |
 | T2-4 | `bed_status` 갱신 로직 (`posture_since`, offline 판정) | | ⬜ |
 | T2-5 | 수동 기록/보정 API | | ⬜ |
 | T2-6 | 가짜 병상 시뮬레이터 `tools/fake_beds.py` | | ⬜ |

@@ -133,6 +133,12 @@ supabase.from("alerts").select("*").is("acknowledged_at", null).order("triggered
 ```
 - `EDGE_OFFLINE_SEC`(기본 180초) 동안 heartbeat가 없으면 `bed_status.status = offline`.
 
+### ⚠ 임시: Supabase 준비 전 개발 모드 (`APP_ENV=development` + Supabase 값 비어 있음)
+- `POST /edge/posture-events`, `POST /edge/heartbeat`는 서버 **메모리**에 저장한다 (서버를 끄면 사라짐).
+- 기기 토큰 대신 `X-Dev-Bed-Code: BED-01` 헤더로 병상을 구분한다. `.env`의 `EDGE_DEVICE_TOKEN`이 있으면 `X-Device-Token`과 같아야 한다.
+- `GET /dev/beds`: 대시보드가 1초마다 읽는 병상 목록(상태·가속 반영 경과 시간 포함). production에서는 없다.
+- Supabase가 연결되면 이 경로와 `services/memory_store.py`를 지운다.
+
 ### `POST /edge-devices`  (`admin`만)
 병상 PC용 기기 토큰 발급. 토큰은 **이 응답에서 한 번만** 보여주고 DB엔 해시만 저장한다.
 ```json

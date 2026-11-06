@@ -34,6 +34,10 @@ class Settings(BaseSettings):
     reposition_warning_min: int = 100
     demo_time_scale: float = 1.0
 
+    # 엣지 (병상 PC)
+    edge_offline_sec: int = 180  # 이 시간 동안 heartbeat 가 없으면 offline
+    edge_device_token: str = ""  # 개발 모드 임시: 엣지와 같은 .env 값. 비어 있으면 검사 안 함
+
     @property
     def cors_origin_list(self) -> list[str]:
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
@@ -41,6 +45,11 @@ class Settings(BaseSettings):
     @property
     def supabase_configured(self) -> bool:
         return bool(self.supabase_url and self.supabase_service_role_key)
+
+    @property
+    def use_memory_store(self) -> bool:
+        """Supabase 준비 전(T0-3) 개발용 임시 메모리 저장소를 쓸지. production 에서는 절대 안 씀."""
+        return self.app_env == "development" and not self.supabase_configured
 
     @property
     def time_scale(self) -> float:

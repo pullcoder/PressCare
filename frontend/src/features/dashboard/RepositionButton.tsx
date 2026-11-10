@@ -5,8 +5,11 @@ import { POSTURE_LABEL, type Posture } from '../../shared/constants/posture'
 
 const CHOICES: Posture[] = ['left_lateral', 'right_lateral', 'supine', 'sitting']
 
-/** 간호사가 체위를 바꾼 뒤 누른다 → 새 자세로 타이머가 0부터 시작. */
-export function RepositionButton({ bedCode }: { bedCode: string }) {
+/**
+ * 수동 기록·보정. 평소에는 카메라가 자세 변경을 자동으로 기록하므로 작게 둔다.
+ * 체위변경이 필요하거나(warning/critical) 인식이 안 될 때(needsCheck)만 크게 보여준다.
+ */
+export function RepositionButton({ bedCode, prominent }: { bedCode: string; prominent: boolean }) {
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -25,13 +28,21 @@ export function RepositionButton({ bedCode }: { bedCode: string }) {
   }
 
   if (!open) {
-    return (
+    return prominent ? (
       <button
         type="button"
         onClick={() => setOpen(true)}
         className="mt-3 w-full rounded-lg bg-white/80 px-3 py-2 text-sm font-semibold text-gray-800 shadow-sm ring-1 ring-black/10 hover:bg-white"
       >
-        체위변경 완료
+        체위변경 완료 기록
+      </button>
+    ) : (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="mt-3 text-xs text-gray-500 underline underline-offset-2 hover:text-gray-800"
+      >
+        수동 기록·보정
       </button>
     )
   }

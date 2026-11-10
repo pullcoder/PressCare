@@ -43,7 +43,14 @@ export function BedCard({ bed, now }: Props) {
         </div>
         {bed.keypoints && <SkeletonView keypoints={bed.keypoints} />}
       </div>
-      {bed.live && bed.status !== 'offline' && <RepositionButton bedCode={bed.code} />}
+      {bed.live && bed.status !== 'offline' && (
+        <RepositionButton
+          bedCode={bed.code}
+          prominent={
+            bed.status === 'warning' || bed.status === 'critical' || Boolean(bed.needsCheck)
+          }
+        />
+      )}
     </article>
   )
 }

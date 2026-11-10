@@ -190,3 +190,16 @@ def test_manual_reposition_resets_timer():
 def test_manual_unknown_bed_404():
     r = client.post("/api/v1/dev/beds/NOPE/postures/manual", json={"posture": "supine"})
     assert r.status_code == 404
+
+
+def test_dev_memory_store_flag_overrides_supabase_keys():
+    s = Settings(
+        _env_file=None,
+        app_env="development",
+        supabase_url="https://x.supabase.co",
+        supabase_service_role_key="sb_secret_x",
+        dev_memory_store=True,
+    )
+    assert s.use_memory_store
+    s_prod = Settings(_env_file=None, app_env="production", dev_memory_store=True)
+    assert not s_prod.use_memory_store

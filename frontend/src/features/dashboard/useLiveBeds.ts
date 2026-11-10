@@ -17,6 +17,8 @@ export function toBedView(b: DevBed): BedView {
     status: b.status,
     elapsedMin: b.elapsed_min,
     keypoints: b.keypoints,
+    needsCheck: b.needs_check,
+    live: true,
   }
 }
 

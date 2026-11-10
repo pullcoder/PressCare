@@ -13,4 +13,6 @@ export type BedView = {
   status: BedStatus
   elapsedMin?: number // 서버가 계산한 값(시연 가속 반영). 없으면 화면에서 계산
   keypoints?: Keypoints | null
+  needsCheck?: boolean // 인식이 안 되는 중 → "확인 필요" 표시 (타이머는 계속)
+  live?: boolean // 실제 병상이면 "체위변경 완료" 버튼 표시
 }

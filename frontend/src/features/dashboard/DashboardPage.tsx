@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react'
+import { shouldAlarm, useAlarm } from '../../shared/hooks/useAlarm'
 import { useNow } from '../../shared/hooks/useNow'
 import { BedCard } from './BedCard'
 import { ConnectionStatus } from './ConnectionStatus'
@@ -21,12 +22,24 @@ export function DashboardPage() {
 
   const isLive = live.source === 'live'
   const beds = isLive ? live.beds : demoBeds
+  const alarm = useAlarm(isLive && shouldAlarm(beds.map((b) => b.status)))
 
   return (
     <section className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-xl font-bold">병동 대시보드</h2>
-        <ConnectionStatus />
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={alarm.enabled ? alarm.disable : alarm.enable}
+            className={`rounded-lg px-3 py-2 text-sm font-semibold shadow-sm ${
+              alarm.enabled ? 'bg-teal-700 text-white' : 'animate-pulse bg-yellow-300 text-gray-900'
+            }`}
+          >
+            {alarm.enabled ? '알림 소리 켜짐 (끄기)' : '알림 소리 켜기'}
+          </button>
+          <ConnectionStatus />
+        </div>
       </div>
       {isLive ? (
         <Notice>

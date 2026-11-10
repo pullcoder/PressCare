@@ -10,6 +10,8 @@ export type DevBed = {
   status: BedStatus
   elapsed_min: number
   keypoints: number[][] | null
+  needs_check: boolean // 지금 인식이 안 됨 (마지막 자세·타이머는 유지)
+  source: 'edge' | 'manual'
 }
 
 export type DevBedsResponse = {
@@ -21,4 +23,13 @@ export type DevBedsResponse = {
 
 export function getDevBeds(): Promise<DevBedsResponse> {
   return apiRequest<DevBedsResponse>('/dev/beds')
+}
+
+/** 간호사 "체위변경 완료" (임시 경로. 원래는 POST /beds/{bed_id}/postures/manual, 로그인 필요) */
+export function recordManualPosture(bedCode: string, posture: Posture): Promise<{ ok: boolean }> {
+  return apiRequest<{ ok: boolean }>(`/dev/beds/${encodeURIComponent(bedCode)}/postures/manual`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ posture }),
+  })
 }

@@ -1,5 +1,6 @@
 import { POSTURE_LABEL, STATUS_LABEL, STATUS_STYLE } from '../../shared/constants/posture'
 import { elapsedMinutes, formatElapsed, formatKstTime } from '../../shared/time'
+import { RepositionButton } from './RepositionButton'
 import { SkeletonView } from './SkeletonView'
 import type { BedView } from './types'
 
@@ -23,6 +24,11 @@ export function BedCard({ bed, now }: Props) {
         <span className="text-sm font-semibold">{STATUS_LABEL[bed.status]}</span>
       </header>
       <p className="mt-1 text-sm opacity-80">{bed.patientName ?? '환자 정보 없음'}</p>
+      {bed.needsCheck && (
+        <p className="mt-2 inline-block rounded bg-gray-800 px-2 py-0.5 text-xs font-semibold text-white">
+          확인 필요 · 지금 인식이 안 됨 (타이머 유지)
+        </p>
+      )}
       <div className="mt-3 flex items-end justify-between gap-3">
         <div>
           <p className="text-base font-medium">{POSTURE_LABEL[bed.posture]}</p>
@@ -37,6 +43,7 @@ export function BedCard({ bed, now }: Props) {
         </div>
         {bed.keypoints && <SkeletonView keypoints={bed.keypoints} />}
       </div>
+      {bed.live && bed.status !== 'offline' && <RepositionButton bedCode={bed.code} />}
     </article>
   )
 }

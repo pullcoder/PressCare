@@ -127,3 +127,66 @@ def test_offline_and_unknown():
 
 def test_get_settings_still_cached():
     assert get_settings() is get_settings()
+
+
+# ----- 인식이 안 될 때 타이머 유지 (이불·어둠) -----
+def post(posture, started):
+    return client.post(
+        "/api/v1/edge/posture-events", json=event(posture, started.isoformat()), headers=HEADERS
+    )
+
+
+def only_bed():
+    return client.get("/api/v1/dev/beds").json()["beds"][0]
+
+
+def test_unknown_keeps_last_posture_timer():
+    t0 = datetime.now(UTC) - timedelta(minutes=30)
+    post("left_lateral", t0)
+    post("unknown", t0 + timedelta(minutes=20))
+    bed = only_bed()
+    assert bed["current_posture"] == "left_lateral"
+    assert bed["needs_check"] is True
+    assert 29.5 < bed["elapsed_min"] < 31
+
+
+def test_same_posture_after_unknown_continues_timer():
+    t0 = datetime.now(UTC) - timedelta(minutes=30)
+    post("supine", t0)
+    post("unknown", t0 + timedelta(minutes=10))
+    post("supine", t0 + timedelta(minutes=20))
+    bed = only_bed()
+    assert bed["needs_check"] is False
+    assert bed["elapsed_min"] > 29.5  # 처음 시각부터 이어짐
+
+
+def test_new_posture_after_unknown_restarts_timer():
+    t0 = datetime.now(UTC) - timedelta(minutes=30)
+    post("supine", t0)
+    post("unknown", t0 + timedelta(minutes=10))
+    post("right_lateral", datetime.now(UTC))
+    bed = only_bed()
+    assert bed["current_posture"] == "right_lateral"
+    assert bed["elapsed_min"] < 1
+
+
+def test_unknown_first_is_just_unknown():
+    post("unknown", datetime.now(UTC))
+    bed = only_bed()
+    assert bed["current_posture"] == "unknown" and bed["status"] == "unknown"
+
+
+# ----- 간호사 "체위변경 완료" -----
+def test_manual_reposition_resets_timer():
+    post("supine", datetime.now(UTC) - timedelta(minutes=125))
+    assert only_bed()["status"] == "critical"
+    r = client.post("/api/v1/dev/beds/BED-01/postures/manual", json={"posture": "right_lateral"})
+    assert r.json() == {"ok": True}
+    bed = only_bed()
+    assert bed["current_posture"] == "right_lateral"
+    assert bed["status"] == "ok" and bed["source"] == "manual"
+
+
+def test_manual_unknown_bed_404():
+    r = client.post("/api/v1/dev/beds/NOPE/postures/manual", json={"posture": "supine"})
+    assert r.status_code == 404

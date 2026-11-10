@@ -11,6 +11,8 @@ describe('toBedView', () => {
       status: 'warning',
       elapsed_min: 10.4,
       keypoints: null,
+      needs_check: true,
+      source: 'edge',
     })
     expect(view).toMatchObject({
       code: 'BED-01',
@@ -19,5 +21,7 @@ describe('toBedView', () => {
       elapsedMin: 10.4,
     })
     expect(view.patientName).toBeNull()
+    expect(view.needsCheck).toBe(true)
+    expect(view.live).toBe(true)
   })
 })

@@ -15,6 +15,20 @@ class DevBed(BaseModel):
     status: BedStatus
     elapsed_min: float  # DEMO_TIME_SCALE 반영한 유지 시간 (분)
     keypoints: list[list[float]] | None = None
+    needs_check: bool = False  # 인식이 안 되는 중 (마지막 자세·타이머는 유지)
+    source: str = "edge"  # edge | manual
+
+
+class ManualPostureIn(BaseModel):
+    """간호사 수동 기록 (API.md 4장). started_at 을 비우면 지금."""
+
+    posture: Posture
+    started_at: datetime | None = None
+    note: str | None = None
+
+
+class ManualPostureOut(BaseModel):
+    ok: bool = True
 
 
 class DevBedsResponse(BaseModel):

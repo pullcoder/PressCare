@@ -137,6 +137,8 @@ supabase.from("alerts").select("*").is("acknowledged_at", null).order("triggered
 - `POST /edge/posture-events`, `POST /edge/heartbeat`는 서버 **메모리**에 저장한다 (서버를 끄면 사라짐).
 - 기기 토큰 대신 `X-Dev-Bed-Code: BED-01` 헤더로 병상을 구분한다. `.env`의 `EDGE_DEVICE_TOKEN`이 있으면 `X-Device-Token`과 같아야 한다.
 - `GET /dev/beds`: 대시보드가 1초마다 읽는 병상 목록(상태·가속 반영 경과 시간 포함). production에서는 없다.
+- `POST /dev/beds/{bed_code}/postures/manual`: 대시보드 "체위변경 완료" 버튼. 원래 경로(4장, 로그인 필요)의 임시판.
+- `unknown`(인식 안 됨)은 마지막 자세와 타이머를 유지하고 `needs_check=true`로만 표시한다. 인식이 돌아와 같은 자세면 타이머를 이어 간다.
 - Supabase가 연결되면 이 경로와 `services/memory_store.py`를 지운다.
 
 ### `POST /edge-devices`  (`admin`만)

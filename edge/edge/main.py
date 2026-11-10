@@ -100,7 +100,11 @@ class DetectionStats:
 def build_parser() -> argparse.ArgumentParser:
     settings = get_settings()
     parser = argparse.ArgumentParser(description="PressCare 엣지 에이전트")
-    parser.add_argument("--camera", default=settings.camera_source, help="웹캠 번호 또는 RTSP 주소")
+    parser.add_argument(
+        "--camera",
+        default=settings.camera_source,
+        help="카메라 번호, RTSP 주소 또는 영상 파일 경로",
+    )
     parser.add_argument("--bed-id", required=True, help="병상 코드 (예: BED-01)")
     parser.add_argument("--fps", type=float, default=settings.camera_fps, help="초당 처리 프레임")
     parser.add_argument(

@@ -6,6 +6,7 @@
 #   ./scripts/demo.sh          # iPhone 카메라 1번, 병상 BED-01
 #   ./scripts/demo.sh 0        # 카메라 번호 바꾸기
 #   ./scripts/demo.sh 1 BED-02 # 병상 코드 바꾸기
+#   ./scripts/demo.sh ~/Desktop/demo.mp4   # 카메라 대신 영상 파일 (실제 속도로 재생)
 # 끄기: 미리보기 창에서 q, 또는 터미널에서 Ctrl+C → 셋 다 같이 꺼진다.
 # 로그: .demo-backend.log, .demo-frontend.log (git 에 올라가지 않음)
 

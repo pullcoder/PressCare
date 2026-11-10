@@ -20,6 +20,12 @@
 - 형식: JSON, 시각은 ISO 8601 UTC (`2026-11-02T06:30:00Z`).
 - 실제 동작 명세는 서버 실행 후 `http://localhost:8000/docs`(Swagger)가 기준. **API를 바꾸면 이 문서도 같이 고친다.**
 
+### `GET /health` (FastAPI, 인증 없음) → 서버·Supabase 연결 확인
+```json
+{ "status": "ok", "app_env": "development", "supabase": "connected" }   // connected | unreachable | not_configured
+```
+- Supabase Auth 헬스(`/auth/v1/health`)로 연결만 확인하고 데이터는 읽지 않는다. 키 값은 응답에 넣지 않는다.
+
 ## 공통 에러 형식 (FastAPI)
 
 ```json
@@ -126,6 +132,17 @@ supabase.from("alerts").select("*").is("acknowledged_at", null).order("triggered
 { "ok": true }
 ```
 - `EDGE_OFFLINE_SEC`(기본 180초) 동안 heartbeat가 없으면 `bed_status.status = offline`.
+
+### ⚠ 임시: Supabase 준비 전 개발 모드 (`APP_ENV=development` + Supabase 값 비어 있음)
+- `POST /edge/posture-events`, `POST /edge/heartbeat`는 서버 **메모리**에 저장한다 (서버를 끄면 사라짐).
+- 기기 토큰 대신 `X-Dev-Bed-Code: BED-01` 헤더로 병상을 구분한다. `.env`의 `EDGE_DEVICE_TOKEN`이 있으면 `X-Device-Token`과 같아야 한다.
+- `GET /dev/beds`: 대시보드가 1초마다 읽는 병상 목록(상태·가속 반영 경과 시간 포함). production에서는 없다.
+- `POST /dev/beds/{bed_code}/postures/manual`: 대시보드 "체위변경 완료" 버튼. 원래 경로(4장, 로그인 필요)의 임시판.
+- `GET /dev/beds/{bed_code}/timeline`: 오늘 자세 기록(구간별 유지 시간, 자세별 누적, 변경 횟수). 3D 히트맵도 이 누적값으로 계산한다.
+- `GET /dev/alerts`, `POST /dev/alerts/{id}/ack` (`{"acknowledged_by": "홍간호사"}`): 알림 목록·확인. 알림은 `ALERT_CHECK_SEC`마다 판단해 자세 구간마다 warning·critical 한 번씩 만들고, 체위가 바뀌면 자동 해제한다.
+- `DEV_FAKE_BEDS=5`: 시연용 가짜 병상(301-2~301-6)을 만들고, 가짜 간호사가 알림 확인·체위변경을 한다.
+- `unknown`(인식 안 됨)은 마지막 자세와 타이머를 유지하고 `needs_check=true`로만 표시한다. 인식이 돌아와 같은 자세면 타이머를 이어 간다.
+- Supabase가 연결되면 이 경로와 `services/memory_store.py`를 지운다.
 
 ### `POST /edge-devices`  (`admin`만)
 병상 PC용 기기 토큰 발급. 토큰은 **이 응답에서 한 번만** 보여주고 DB엔 해시만 저장한다.

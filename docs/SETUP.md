@@ -70,6 +70,8 @@ pip install -r requirements.txt
 uvicorn app.main:app --reload   # http://localhost:8000/docs 열리면 성공
 ```
 
+- 연결 확인: `http://localhost:8000/api/v1/health` → `"supabase": "connected"`. 키를 아직 안 넣었으면 `not_configured`.
+
 ## 5. 엣지 에이전트 (웹캠 연결 PC)
 
 ```bash
@@ -77,12 +79,19 @@ cd edge
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
+python -m edge.download_model                                # 처음 한 번: 포즈 모델 받기
 python -m edge.main --camera 0 --bed-id BED-01 --preview   # --preview: 관절 표시 창 (개발용)
 ```
 
-- 포즈 모델 파일(`pose_landmarker.task`)은 저장소에 없다. MediaPipe 공식 페이지에서 받아 `edge/models/weights/`에 둔다.
+- 포즈 모델 파일(`pose_landmarker_lite.task`)은 저장소에 없다. 처음 한 번 `python -m edge.download_model`을 실행하면 `edge/models/weights/`에 받아진다 (`--variant full`로 더 정확한 모델).
+- 종료(`q` 또는 Ctrl+C)할 때 사람 검출률과 주요 관절 평균 신뢰도가 출력된다. 인식 검증(T1-0)에 참고한다.
+- **기준 자세 등록**: 카메라가 사선·옆에 있으면 바로 누워도 측위로 보일 수 있다. 미리보기 창에서 바로 누운 채로 `c` 키를 누르면 2초쯤 측정해 병상별 기준을 `edge/calibration/<병상>.json`에 저장한다(숫자 3개, git 제외). 카메라를 옮기면 다시 등록한다.
 - `EDGE_DEVICE_TOKEN`은 `POST /edge-devices`(API.md 3장)로 발급받아 `.env`에 넣는다.
 - `--preview` 창은 개발용이다. **edge 코드에 녹화·프레임 저장 기능을 만들지 않는다** (D-002).
+
+### 휴대폰을 카메라로 쓰기
+- **iPhone + Mac (연속성 카메라)**: 같은 Apple ID로 로그인, Wi-Fi·Bluetooth 켜기, iPhone을 거치대에 고정하면 Mac에 카메라로 잡힌다. `python -m edge.list_cameras`로 번호를 확인해 `--camera <번호>`로 실행한다.
+- **그 밖의 휴대폰**: IP 카메라 앱으로 같은 Wi-Fi에 영상을 내보내고 `--camera http://<휴대폰IP>:<포트>/...` 또는 `rtsp://...` 주소를 넣는다. 영상은 같은 공유기 안에서만 오가게 한다 (D-002).
 
 ### 카메라 없이 개발하기
 ```bash
@@ -101,6 +110,13 @@ python tools/fake_beds.py --beds 4 --time-scale 60   # 가짜 병상 4개가 자
 - 개발·시연 영상은 **팀원이 직접 누워서 촬영**한다. 실제 환자 촬영 금지. 30° 측위(베개로 받친 자세)도 포함한다.
 - 테스트 영상은 저장소 밖(예: 팀 드라이브)에 보관한다. `.gitignore`가 `*.mp4` 등을 막지만 다른 확장자도 커밋하지 않는다.
 
+### 시연: 한 번에 실행 (Mac)
+```bash
+./scripts/demo.sh            # 백엔드 + 프론트 + 엣지(카메라 1, BED-01). Mac 터미널 앱에서 실행
+./scripts/demo.sh 0 BED-02   # 카메라 번호, 병상 코드 바꾸기
+```
+- 미리보기 창에서 `q` 또는 Ctrl+C 하면 셋 다 꺼진다. 대시보드에서 **"알림 소리 켜기"**를 눌러야 경고음이 난다.
+
 ## 6. 프론트엔드
 
 ```bash
@@ -108,6 +124,8 @@ cd frontend
 npm install
 npm run dev                     # http://localhost:5173
 ```
+- 루트 `.env`의 `VITE_` 값만 읽는다(`vite.config.ts`의 `envDir: '..'`). Supabase 값이 비어 있으면 대시보드는 **예시 데이터**를 보여준다.
+- `npm test`(vitest), `npm run lint`(oxlint), `npm run format`(Prettier), `npm run build`로 확인한다.
 - 경고음은 브라우저 정책상 **페이지에서 한 번 클릭한 뒤에만** 난다. 대시보드의 "알림 켜기" 버튼을 누른다.
 - 웹 푸시는 `localhost` 또는 HTTPS에서만 동작한다. 아이폰은 iOS 16.4 이상에서 홈 화면에 추가해야 받는다.
 

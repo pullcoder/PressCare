@@ -1,0 +1,9 @@
+# PressCare edge (Python 3.11, D-005)
+opencv-python>=4.9
+mediapipe>=0.10.14  # Apache 2.0 (D-004), 모델은 python -m edge.download_model
+pydantic-settings>=2.4
+httpx>=0.27
+
+# 개발·테스트
+pytest>=8
+ruff>=0.6

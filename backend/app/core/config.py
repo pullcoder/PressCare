@@ -38,6 +38,12 @@ class Settings(BaseSettings):
     edge_offline_sec: int = 180  # 이 시간 동안 heartbeat 가 없으면 offline
     edge_device_token: str = ""  # 개발 모드 임시: 엣지와 같은 .env 값. 비어 있으면 검사 안 함
     dev_memory_store: bool = False  # 개발 모드에서 Supabase 키가 있어도 임시 메모리 저장소 사용
+    dev_fake_beds: int = (
+        0  # 시연용 가짜 병상 수 (0~5). 카메라 병상(301-1) 옆을 채워 6인실처럼 보이게 함
+    )
+
+    # 알림 (D-012)
+    alert_check_sec: float = 3.0  # 알림 판단 루프 주기 (초)
 
     @property
     def cors_origin_list(self) -> list[str]:

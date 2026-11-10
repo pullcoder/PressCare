@@ -19,3 +19,11 @@ export function formatKstTime(iso: string): string {
     minute: '2-digit',
   })
 }
+
+/** 카드에 쓰는 "다음 체위변경까지" 문구. 시간은 시연 가속이 반영된 분 단위. */
+export function formatRemaining(elapsedMin: number, intervalMin: number): string {
+  const left = Math.round(intervalMin - elapsedMin)
+  if (left > 0) return `다음 체위변경까지 ${formatElapsed(left)}`
+  if (left === 0) return '지금 체위변경 시간'
+  return `기준 시간 ${formatElapsed(-left)} 초과`
+}

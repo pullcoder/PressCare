@@ -1,3 +1,4 @@
+import type { DevAlertBrief } from '../../shared/api/devBeds'
 import type { BedStatus, Posture } from '../../shared/constants/posture'
 
 /** [x, y, visibility] 정규화 좌표 33개 (API.md). 영상이 아니라 숫자만 온다. */
@@ -14,5 +15,7 @@ export type BedView = {
   elapsedMin?: number // 서버가 계산한 값(시연 가속 반영). 없으면 화면에서 계산
   keypoints?: Keypoints | null
   needsCheck?: boolean // 인식이 안 되는 중 → "확인 필요" 표시 (타이머는 계속)
-  live?: boolean // 실제 병상이면 "체위변경 완료" 버튼 표시
+  live?: boolean // 실제 병상이면 상세 화면·수동 기록 사용 가능
+  simulated?: boolean // 시연용 가짜 병상
+  alert?: DevAlertBrief | null
 }

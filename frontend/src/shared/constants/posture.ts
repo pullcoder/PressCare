@@ -41,3 +41,13 @@ export const STATUS_STYLE: Record<BedStatus, string> = {
   unknown: 'border-gray-400 bg-gray-50 text-gray-700',
   offline: 'border-gray-400 bg-gray-100 text-gray-500',
 }
+
+/** 타임라인 막대 색 (자세 구분용, 상태 색과 겹치지 않게) */
+export const POSTURE_COLOR: Record<Posture, string> = {
+  supine: '#3b82f6',
+  left_lateral: '#14b8a6',
+  right_lateral: '#8b5cf6',
+  sitting: '#f59e0b',
+  absent: '#9ca3af',
+  unknown: '#d1d5db',
+}

@@ -58,7 +58,7 @@
 | T2-2 | RLS 정책 (admin 전체 / nurse 소속 병동), Realtime publication(bed_status, alerts) | | ⬜ |
 | T2-3 | `POST /edge/posture-events`, heartbeat, 기기 토큰 발급 | daeun04 | 🟨 |
 | T2-4 | `bed_status` 갱신 로직 (`posture_since`, offline 판정) | | ⬜ |
-| T2-5 | 수동 기록/보정 API | | ⬜ |
+| T2-5 | 수동 기록/보정 API | daeun04 | 🟨 |
 | T2-6 | 가짜 병상 시뮬레이터 `tools/fake_beds.py` | | ⬜ |
 | T2-7 | `core/crypto.py`: AES-256-GCM 필드 암호화, HMAC 인덱스, Argon2id·SHA-256 해시 + 테스트 (SECURITY.md) | | ⬜ |
 
@@ -66,12 +66,12 @@
 
 | ID | 할 일 | 담당 | 상태 |
 |----|------|------|------|
-| T3-1 | 알림 판단 루프 (warning 100분 / critical 120분) + 시간 가속 `DEMO_TIME_SCALE` | | ⬜ |
+| T3-1 | 알림 판단 루프 (warning 100분 / critical 120분) + 시간 가속 `DEMO_TIME_SCALE` | daeun04 | 🟨 |
 | T3-2 | Supabase Realtime 구독 훅 (`useBedStatus`, `useAlerts`) | | ⬜ |
 | T3-3 | 병동 대시보드 (병상 카드, 색상 상태, 경과 시간) | daeun04 | 🟨 |
-| T3-4 | 경고음 반복 + 화면 깜빡임 + "알림 켜기" 버튼 | | ⬜ |
-| T3-5 | 병상 상세 + 타임라인 화면 | | ⬜ |
-| T3-6 | 알림 목록 + 확인(ack) | | ⬜ |
+| T3-4 | 경고음 반복 + 화면 깜빡임 + "알림 켜기" 버튼 | daeun04 | 🟨 |
+| T3-5 | 병상 상세 + 타임라인 화면 | daeun04 | 🟨 |
+| T3-6 | 알림 목록 + 확인(ack) | daeun04 | 🟨 |
 | T3-7 | 웹 푸시 (PWA 설정, 구독, critical 시 발송) | | ⬜ |
 | T3-8 | 미확인 알림 문자 발송 (`ALERT_ESCALATE_MIN`, 업체 선정 포함) | | ⬜ |
 
@@ -88,8 +88,8 @@
 | ID | 할 일 | 담당 | 상태 |
 |----|------|------|------|
 | T5-1 | 상업 이용 가능한 3D 인체 모델 선정 (예: MakeHuman CC0 출력) | | ⬜ |
-| T5-2 | 자세 → 부위 매핑표, 누적 시간 계산 API | | ⬜ |
-| T5-3 | Three.js 뷰어 + 부위 위치 색 점 (메시 분리는 v1) | | ⬜ |
+| T5-2 | 자세 → 부위 매핑표, 누적 시간 계산 API | daeun04 | 🟨 |
+| T5-3 | Three.js 뷰어 + 부위 위치 색 점 (메시 분리는 v1) | daeun04 | 🟨 |
 
 ## T6. 배포 · 공모전 시연 준비
 

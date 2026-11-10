@@ -18,3 +18,13 @@ describe('경과 시간', () => {
     expect(formatKstTime('2026-11-06T00:30:00Z')).toContain('09:30')
   })
 })
+
+import { formatRemaining } from './time'
+
+describe('남은 시간 문구', () => {
+  it('기준 전·정각·초과', () => {
+    expect(formatRemaining(95, 120)).toBe('다음 체위변경까지 25분')
+    expect(formatRemaining(120, 120)).toBe('지금 체위변경 시간')
+    expect(formatRemaining(185, 120)).toBe('기준 시간 1시간 05분 초과')
+  })
+})

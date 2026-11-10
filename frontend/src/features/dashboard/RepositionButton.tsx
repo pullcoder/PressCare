@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { ApiError } from '../../shared/api/client'
 import { recordManualPosture } from '../../shared/api/devBeds'
 import { POSTURE_LABEL, type Posture } from '../../shared/constants/posture'
+import { getNurseName } from '../../shared/nurse'
+import { useLiveData } from './useLiveBeds'
 
 const CHOICES: Posture[] = ['left_lateral', 'right_lateral', 'supine', 'sitting']
 
@@ -13,13 +15,15 @@ export function RepositionButton({ bedCode, prominent }: { bedCode: string; prom
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { refresh } = useLiveData()
 
   const choose = async (posture: Posture) => {
     setBusy(true)
     setError(null)
     try {
-      await recordManualPosture(bedCode, posture)
+      await recordManualPosture(bedCode, posture, getNurseName())
       setOpen(false)
+      refresh()
     } catch (err: unknown) {
       setError(err instanceof ApiError ? err.message : '기록하지 못했습니다.')
     } finally {

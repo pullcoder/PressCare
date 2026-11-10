@@ -138,6 +138,9 @@ supabase.from("alerts").select("*").is("acknowledged_at", null).order("triggered
 - 기기 토큰 대신 `X-Dev-Bed-Code: BED-01` 헤더로 병상을 구분한다. `.env`의 `EDGE_DEVICE_TOKEN`이 있으면 `X-Device-Token`과 같아야 한다.
 - `GET /dev/beds`: 대시보드가 1초마다 읽는 병상 목록(상태·가속 반영 경과 시간 포함). production에서는 없다.
 - `POST /dev/beds/{bed_code}/postures/manual`: 대시보드 "체위변경 완료" 버튼. 원래 경로(4장, 로그인 필요)의 임시판.
+- `GET /dev/beds/{bed_code}/timeline`: 오늘 자세 기록(구간별 유지 시간, 자세별 누적, 변경 횟수). 3D 히트맵도 이 누적값으로 계산한다.
+- `GET /dev/alerts`, `POST /dev/alerts/{id}/ack` (`{"acknowledged_by": "홍간호사"}`): 알림 목록·확인. 알림은 `ALERT_CHECK_SEC`마다 판단해 자세 구간마다 warning·critical 한 번씩 만들고, 체위가 바뀌면 자동 해제한다.
+- `DEV_FAKE_BEDS=5`: 시연용 가짜 병상(301-2~301-6)을 만들고, 가짜 간호사가 알림 확인·체위변경을 한다.
 - `unknown`(인식 안 됨)은 마지막 자세와 타이머를 유지하고 `needs_check=true`로만 표시한다. 인식이 돌아와 같은 자세면 타이머를 이어 간다.
 - Supabase가 연결되면 이 경로와 `services/memory_store.py`를 지운다.
 
